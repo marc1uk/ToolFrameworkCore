@@ -4,6 +4,17 @@ namespace ToolFramework {
 
 Store::Store(){}
 
+void Store::Initialise(std::stringstream inputstream){
+	std::string line;
+	while(getline(inputstream, line)){
+		if(line.empty()) continue;
+		if(line[0]=='#') continue;
+		std::string key;
+		std::string value;
+		std::stringstream stream(line);
+		if(stream>>key>>value) m_variables[key]=value;
+	}
+}
 
 bool Store::Initialise(std::string filename){
   
@@ -68,49 +79,64 @@ void Store::JsonParser(std::string input){
   int type=0;
   std::string key="";
   std::string value="";
-  int bracket_counter=0;
+  bool term = false;
 
   for(std::string::size_type i = 0; i < input.size(); ++i) {
-   
-    //std::cout<<"i="<<i<<" , "<<input[i]<<" , type="<<type<<std::endl;
- 
-     //type 0011112233444444550011112233333333001111223366666665500111122337777777555
-     //     { "key" : "value" , "key" : value , "key" : {......} , "key" : [......] }
-
-     // types: 0 - pre key
-     //        1 - key
-     //        2 - postkey
-     //        3 - value
-     //        4 - string value
-     //        5 - post value
-     //        6 - object
-     //        7 - array
-
-    if ((input[i] == '\n' || input[i] == '\r') && type != 4) continue;
-
-    if(input[i]=='\"' && type<5){
-      if(type==4) value+='"';
-      type++;
-      if(type==4) value+='"';
-    }
-     else if(type==1) key+=input[i];
-     else if(input[i]==':' && type==2) type=3;   
-     else if((input[i]==',' || input[i]=='}') && (type==5 || type==3)){
+    
+     if(type==2){
+         // scanning a key
+         if(value.size()==0){
+            // not yet found start of key, might be string or otherwise
+            if(input[i]==':' || input[i]==' '){
+                continue; // still not found the start, keep looking
+            } else if(input[i]=='\"'){
+                // string value, set our scan to stop at a terminating '"'
+                term=true;
+            } else {
+                // not a string, set our scan to stop at a terminating ','
+                value+=input[i];  // this isn't a terminator, so add to value
+            }
+         } else {
+             // we're adding chars. check for terminator
+             if( (term && input[i]=='\"') || (!term && input[i]==',') || (!term && input[i]=='}') ){
+                 // terminator found, add to internal map and reset
+                 type=0;
+                 size_t sz=value.size();
+                 while(value[sz-1]==' ') --sz; // trim
+                 value.resize(sz);
+                 m_variables[key] = value;
+                 key="";
+                 value="";
+                 term=false;
+             } else {
+                // just a char to add to value
+                value+=input[i];
+             }
+         }
+     }
+     else if(input[i]=='\"') type++;
+     else if(type==1)key+=input[i];
+     else if(type==3)value+=input[i];
+     else if(type==4){
        type=0;
-       //std::cout<<"key="<<key<<" , value="<<value<<std::endl;
        m_variables[key]=value;
        key="";
        value="";
+       term=false;
      }
-     else if(type==3  && !(input[i]==' ' || input[i]=='{' || input[i]=='[')) value+=input[i];
-     else if(type==3  && input[i]=='{'){ value+=input[i]; type=6; }
-     else if(type==4  && input[i]=='{'){ value.replace(value.length()-1, 1, "{"); type=6; }
-     else if(type==6  && input[i]=='{'){ value+=input[i]; bracket_counter++; }
-     else if(type==6  && input[i]=='}'){ value+=input[i]; bracket_counter--;if(bracket_counter==-1){ type=5; bracket_counter=0;} }
-     else if(type==3  && input[i]=='['){ value+=input[i]; type=7; }
-     else if(type==7  && input[i]=='['){ value+=input[i]; bracket_counter++; }
-     else if(type==7  && input[i]==']'){ value+=input[i]; bracket_counter--;if(bracket_counter==-1){ type=5; bracket_counter=0;} }
-     else if(type==4 || type==6 || type==7) value+=input[i];
+     
+      
+      /*
+    if(input[i]!=',' &&  input[i]!='{' && input[i]!='}' && input[i]!='\"' && input[i]!=':' && input[i]!=',')pair<<input[i];
+    else if(input[i]==':')pair<<" ";
+    else if(input[i]==',') {
+      std::cout<<" i = "<<i<<" pair = "<<pair<<std::endl;
+    
+      pair>>key>>value;
+      */  
+      //pair.clear();
+
+      //}
   }
 
 }

@@ -26,6 +26,7 @@ namespace ToolFramework{
     Store(); ////< Sinple constructor
     
     bool Initialise(std::string filename); ///< Initialises Store by reading in entries from an ASCII text file, when each line is a variable and its value in key value pairs.  @param filename The filepath and name to the input file.
+    void Initialise(std::stringstream inputstream);
     void JsonParser(std::string input); ///<  Converts a flat JSON formatted string to Store entries in the form of key value pairs.  @param input The input flat JSON string.
     void Print(); ///< Prints the contents of the Store.
     void Delete(); ///< Deletes all entries in the Store.
