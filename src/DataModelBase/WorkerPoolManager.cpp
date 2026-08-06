@@ -56,12 +56,14 @@ WorkerPoolManager::~WorkerPoolManager() {
   }
 
   m_util.KillThread(&m_manager_args);
- 
+  (*m_manager_args.global_thread_num)--;
+  
+  
   for (unsigned int i = 0; i < m_manager_args.args.size(); i++){
 
     m_util.KillThread(m_manager_args.args.at(i));
     delete m_manager_args.args.at(i);
- 
+    (*m_manager_args.global_thread_num)--;
  }
 
   m_manager_args.args.clear();
@@ -77,6 +79,7 @@ void WorkerPoolManager::CreateManagerThread() {
 
   std::string tmp="TManager";
   m_util.CreateThread(tmp, &ManagerThread, &m_manager_args);
+  (*m_manager_args.global_thread_num)++;
 
 }
 

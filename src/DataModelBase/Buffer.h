@@ -17,6 +17,13 @@ namespace ToolFramework{
       std::lock_guard<std::mutex> lock(mtx);    
       data.push_back(in);
     };
+
+    void Add(T&& in)
+    {
+      std::lock_guard<std::mutex> lock(mtx);    
+      data.push_back(std::move(in));
+    }
+    
     void Swap(std::vector<T> &in){
       std::lock_guard<std::mutex> lock(mtx);
       if(data.size()) std::swap (data, in);
